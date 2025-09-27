@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHZD</title>
+    <link rel="icon" id="favicon" href="/images/favicon.png" type="image/png">
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1f1f1f;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;       /* horizontal center */
+            justify-content: flex-start; /* top alignment */
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        #main-content {
+            background-color: #000000;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 60px;
+            width: 30%
+        }
+
+        h1 {
+            color: #00c90a;
+        }
+
+        p {
+            color: #9b9b9b;
+            font-size: 1.2em;
+            line-height: 1.6em;
+        }
+
+        .message {
+            color: white
+        }
+    </style>
+</head>
+<body>
+    <div id="main-content">
+        <h1>Video Processing</h1>
+        <p class="message">" <%=locals.videoTitle %> "</p>
+        <p>Video will be sent automatically once it's finished processing.</p>
+        <p>You can close this window.</p>
+    </div>
+</body>
+</html>

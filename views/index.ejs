@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHZD</title>
+    <link rel="icon" id="favicon" href="/images/favicon.png" type="image/png">
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1f1f1f;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;       /* horizontal center */
+            justify-content: flex-start; /* top alignment */
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        #main-content {
+            background-color: #000000;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 60px;
+            width: 30%
+        }
+
+        h1 {
+            color: #4f46e5;
+        }
+
+        p {
+            color: #ffffff;
+            font-size: 1.2em;
+            line-height: 1.6em;
+        }
+
+        input {
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 12px;   /* rounded edges */
+            outline: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            width: 80%;
+            background-color: #1f1f1f;
+            color: white;
+        }
+
+        input:focus {
+            border-color: #4f46e5; /* Indigo accent */
+            box-shadow: 0 0 6px rgba(79, 70, 229, 0.4);
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px; /* rounded edges */
+            background-color: #1e3a8a; /* deep blue */
+            color: #ffffff; /* solid white text */
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2b4fc7; /* brighter blue on hover */
+            box-shadow: 0 0 8px rgba(79, 70, 229, 0.6); /* indigo glow */
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .optional {
+            font-size: 0.85em;
+            color: #aaa; /* lighter gray for subtlety */
+            font-weight: normal;
+            margin-left: 4px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="main-content">
+        <form id="videoForm">
+            <h1>Share a video to <%=locals.server%></h1>
+            <p>Video you would like to share</p>
+            <input class="input" type="text" name="video" id="videoInput" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+            <br><br><br>
+            <p>
+                Message <span class="optional">(optional)</span>
+            </p>
+            <input class="input" type="text" name="message" id="messageInput">
+            <br><br>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    
+    <script>
+    const form = document.getElementById('videoForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const videoInput = document.getElementById('videoInput').value.trim();
+        const messageInput = document.getElementById('messageInput').value.trim();
+
+        if (!videoInput) {
+            alert('Please enter a video URL');
+            return;
+        }
+
+        let url = `/${videoInput}`;
+        if (messageInput) {
+            // encode the message for query string
+            url += `/?message=${encodeURIComponent(messageInput)}`;
+        }
+
+        window.location.href = url;
+    });
+    </script>
+</body>
+</html>
