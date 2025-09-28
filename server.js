@@ -30,7 +30,11 @@ const supportedDomains = [
     "youtu.be",
     "www.youtu.be",
     "instagram.com",
-    "www.instagram.com"
+    "www.instagram.com",
+    "www.twitch.tv",
+    "twitch.tv",
+    "reddit.com",
+    "www.reddit.com"
 ]
 
 // Uses yt-dlp to download video
