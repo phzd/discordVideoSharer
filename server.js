@@ -41,13 +41,15 @@ const supportedDomains = [
     "www.reddit.com"
 ]
 
+const logFile = path.join(__dirname, 'logs', 'app.log');
+
 // Uses yt-dlp to download video
 function downloadVideo(url, output) {
     return new Promise((resolve, reject) => {
         exec(`yt-dlp -o cache/downloads/${output}.mp4 --recode-video mp4 ${url}`, (error, stdout, stderr) => {
-            console.log(stdout)
+            //log(stdout)
             if (error) return reject(error);
-            if (stderr) console.error(stderr);
+            if (stderr) log(`Error: ${stderr}`);
             resolve(stdout);
         });
     });
@@ -62,10 +64,10 @@ async function shrinkVideo(video) {
     // Get file stats
     const stats = fs.statSync(filePath);
     const fileSizeInMB = stats.size / (1024 * 1024);
-    console.log(fileSizeInMB.toPrecision(2),"MB")
+    log(`${video} is ${fileSizeInMB.toPrecision(2)}MB`)
 
     if (fileSizeInMB > safeFileSize) {
-        console.log(`Video is greater than ${MAX_FILE_SIZE}MB, resizing...`);
+        log(`${video} is greater than ${MAX_FILE_SIZE}MB, resizing...`);
         // Get duration with ffprobe
         const duration = await new Promise((resolve, reject) => {
             exec(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, 
@@ -86,15 +88,15 @@ async function shrinkVideo(video) {
 
         if (videoBitrate <= 0) throw new Error("Target size too small for given duration");
 
-        console.log(`Duration: ${duration}s`);
-        console.log(`Target video bitrate: ${Math.floor(videoBitrate / 1000)} kbps`);
+        log(`${video} duration is: ${duration}s`);
+        log(`${video} target bitrate: ${Math.floor(videoBitrate / 1000)} kbps`);
 
         // Run ffmpeg with calculated bitrate
         return new Promise((resolve, reject) => {
             exec(
                 `ffmpeg -i "${filePath}" -c:v libx264 -b:v ${videoBitrate} -c:a aac -b:a ${audioBitrate} "${outputFilePath}" -y`,
                 (err, stdout, stderr) => {
-                    console.log(stdout)
+                    //log(stdout)
                     if (err) return reject(err);
                     resolve(outputFilePath);
                 }
@@ -105,7 +107,7 @@ async function shrinkVideo(video) {
         // File size is already under 10MB, move it to videos folder
         fs.rename(filePath, outputFilePath, (err) => {
         if (err) throw err;
-        console.log('Moved video to videos folder, ready to send!');
+        //log('Moved video to videos folder, ready to send!');
         });
         return
     }
@@ -118,7 +120,6 @@ async function sendVideo(video, message, username) {
     let webhookMessage = ""
 
     // Add message text if applicable
-    console.log(username)
     if (username) {
         webhookMessage += `${username} shared:`
     }
@@ -135,9 +136,9 @@ async function sendVideo(video, message, username) {
         const res = await axios.post(DISCORD_WEBHOOK, form, {
             headers: form.getHeaders(),
         });
-        console.log("Message sent:", res.status);
+        log(`Message sent: ${res.status}`);
     } catch (err) {
-        console.error("Error sending webhook:", err.response?.data || err.message);
+        log(`Error sending webhook: ${err.response?.data || err.message}`);
     }
 }
 
@@ -148,7 +149,7 @@ function checkVideoLength(url) {
     return new Promise((resolve, reject) => {
         exec(`yt-dlp --get-duration ${url}`, (error, stdout, stderr) => {
             if (error) return reject(error);
-            if (stderr) console.error(stderr);
+            if (stderr) log(`Error: ${stderr}`);
 
             const durationStr = stdout.trim();
             const parts = durationStr.split(":").map(Number);
@@ -161,7 +162,7 @@ function checkVideoLength(url) {
                 seconds = parts[0];
             }
 
-            console.log(`Video length is: ${durationStr}`)
+            log(`Video length is: ${durationStr}`)
             resolve(seconds);
         });
     });
@@ -177,14 +178,22 @@ function isApprovedUrl(url, approvedDomains) {
     }
 }
 
-// Logs IPs and requests
-function logger() {
-
+// Logs data to file
+function log(message, ip = null) {
+  const timestamp = new Date().toISOString();
+  const ipStr = ip ? ` [IP: ${ip}]` : '';
+  const logEntry = `[${timestamp}]${ipStr} ${message}\n`;
+  
+  // Write to file
+  fs.appendFileSync(logFile, logEntry);
+  
+  // Also print to console
+  console.log(logEntry.trim());
 }
 
 // Cleans up files in case of failure
 async function cleanupFiles(guid, folder = "cache") {
-    console.log(`Cleaning up files within ${folder}`)
+    log(`Cleaning up files within ${folder}`)
     try {
         const items = await promisefs.readdir(folder)
 
@@ -196,17 +205,17 @@ async function cleanupFiles(guid, folder = "cache") {
                 
                 if (item.startsWith(guid)) {
                     await promisefs.unlink(fullPath);
-                    console.log(`Deleted file: ${fullPath}`);
+                    //log(`Deleted file: ${fullPath}`);
                 } else if (stats.isDirectory()) {
                     // Recursively check subdirectories
                     await cleanupFiles(guid, fullPath);
                 }
             } catch (itemError) {
-                console.error(`Error processing ${fullPath}: ${itemError.message}`);
+                log(`Error processing ${fullPath}: ${itemError.message}`);
             }
         }
     } catch (err) {
-        console.error(`Error while cleaning ${folder}:`, err);
+        log(`Error while cleaning ${folder}: ${err.message}`);
     }
 }
 
@@ -225,12 +234,12 @@ function getVideoTitle(url) {
 // Complete full download and send of video
 async function downloadAndSend(url, guid, res, message, req) {
     // Check video length
-    console.log("Attempting to download:", url)
+    log(`Requested to download: ${url}`, req.ip)
     const videoLength = await checkVideoLength(url)
     if (videoLength > MAX_VIDEO_LENGTH) {
         const errorMessage = `Video is longer than ${MAX_VIDEO_LENGTH} seconds`
         res.render('error.ejs', { errorMessage: errorMessage})
-        console.log(errorMessage)
+        log(errorMessage)
         throw new error(errorMessage)
     }
     // Get video title
@@ -240,7 +249,7 @@ async function downloadAndSend(url, guid, res, message, req) {
     }
     // Attempt to download the video
     await downloadVideo(url, guid)
-    console.log(`Video Downloaded as: ${guid}.mp4`)
+    log(`Video Downloaded as: ${guid}.mp4`)
     // Reduce file size to MB (If applicable)
     await shrinkVideo(`${guid}.mp4`)
     // Send the video to discord via webhook
@@ -253,11 +262,16 @@ app.post("/set-username", (req, res) => {
     const { username } = req.body;
     if (username) {
         res.cookie("username", username, { maxAge: 7 * 24 * 60 * 60 * 1000 });
+        log(`set username to: ${username}`, req.ip)
     } else {
         res.clearCookie("username")
+        log(`cleared username`, req.ip)
     }
     res.redirect("/");
 });
+
+// Serve static files from "public" folder
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware to check all incoming requests
 app.use(async (req, res, next) => {
@@ -293,15 +307,15 @@ app.use(async (req, res, next) => {
                 await downloadAndSend(videoUrl, guid, res, message, req) 
                 cleanupFiles(guid)     
             } catch (err) {
-                console.error(`Failed to download ${videoUrl}`, err)
+                log(`Failed to download ${videoUrl}`, err)
                 cleanupFiles(guid)
             }
         } else {
             res.render('error.ejs', {errorMessage: `URL below is not an approved URL.`, errorSource: videoUrl})
-            console.log(`URL '${fullPath}' is not an approved URL`)
+            log(`URL '${fullPath}' is not an approved URL`)
         }
     } else {
-        console.log('Root path accessed');
+        log('Connected to home page', req.ip);
         res.render('index.ejs', {server: SERVER_NAME, username: req.cookies.username || ""})
     }
     
@@ -310,5 +324,5 @@ app.use(async (req, res, next) => {
 
 // Start the server and listen on the specified port
 app.listen(PORT, () => {
-    console.log('Server running on port:', PORT);
+    log(`Server running on port: ${PORT}`);
 });
