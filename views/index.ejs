@@ -84,9 +84,39 @@
             margin-left: 4px;
         }
 
+        #username-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #000000;
+            padding: 10px;
+            border-radius: 15px;
+        }
+        #username-box input {
+            padding: 10px;
+
+        }
+
+
     </style>
 </head>
 <body>
+    <div id="username-box">
+        <form action="/set-username" method="POST">
+            <p>
+                Shared by <span class="optional">(optional)</span>
+            </p>
+            <input 
+                type="text" 
+                name="username" 
+                placeholder="Enter your name"
+                value="<%= locals.username ? locals.username : '' %>"
+            >
+            <br><br>
+            <button type="submit">Save</button>
+        </form>
+    </div>
+
     <div id="main-content">
         <form id="videoForm">
             <h1>Share a video to <%=locals.server%></h1>

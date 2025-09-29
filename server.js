@@ -7,12 +7,16 @@ const promisefs = require("fs").promises // Module for managing files with promi
 const axios = require("axios") // Module for making webhook request
 const formData = require("form-data") // Module for putting together message headers
 const url = require('url'); // Module for URL handling
+const cookieParser = require('cookie-parser') // Module for handling cookies
 const { error } = require('console');
 
 require('dotenv').config() // Module for importing .env variables
 
 // Create an Express application instance
 const app = express();
+
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 // Use EJS view engine
 app.set('view engine', 'ejs')
@@ -108,12 +112,21 @@ async function shrinkVideo(video) {
 }
 
 // Uses discord webhook to send video to discord
-async function sendVideo(video, message) {
+async function sendVideo(video, message, username) {
     const form = new formData();
     const filePath = `cache/videos/${video}`
+    let webhookMessage = ""
 
     // Add message text if applicable
-    form.append("content", message);
+    console.log(username)
+    if (username) {
+        webhookMessage += `${username} shared:`
+    }
+    if (message) {
+        webhookMessage += `\n${message}`
+    }
+
+    form.append("content", webhookMessage)
 
     // Add the video file
     form.append("file", fs.createReadStream(filePath));
@@ -210,7 +223,7 @@ function getVideoTitle(url) {
 }
 
 // Complete full download and send of video
-async function downloadAndSend(url, guid, res, message) {
+async function downloadAndSend(url, guid, res, message, req) {
     // Check video length
     console.log("Attempting to download:", url)
     const videoLength = await checkVideoLength(url)
@@ -231,8 +244,20 @@ async function downloadAndSend(url, guid, res, message) {
     // Reduce file size to MB (If applicable)
     await shrinkVideo(`${guid}.mp4`)
     // Send the video to discord via webhook
-    sendVideo(`${guid}.mp4`, message)
+    const username = req.cookies.username
+    sendVideo(`${guid}.mp4`, message, username)
 }
+
+// Save username to cookie
+app.post("/set-username", (req, res) => {
+    const { username } = req.body;
+    if (username) {
+        res.cookie("username", username, { maxAge: 7 * 24 * 60 * 60 * 1000 });
+    } else {
+        res.clearCookie("username")
+    }
+    res.redirect("/");
+});
 
 // Middleware to check all incoming requests
 app.use(async (req, res, next) => {
@@ -265,7 +290,7 @@ app.use(async (req, res, next) => {
     if (videoUrl) {
         if (isApprovedUrl(videoUrl, supportedDomains)) {
             try {
-                await downloadAndSend(videoUrl, guid, res, message) 
+                await downloadAndSend(videoUrl, guid, res, message, req) 
                 cleanupFiles(guid)     
             } catch (err) {
                 console.error(`Failed to download ${videoUrl}`, err)
@@ -277,7 +302,7 @@ app.use(async (req, res, next) => {
         }
     } else {
         console.log('Root path accessed');
-        res.render('index.ejs', {server: SERVER_NAME})
+        res.render('index.ejs', {server: SERVER_NAME, username: req.cookies.username || ""})
     }
     
     next();
