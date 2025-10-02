@@ -130,7 +130,7 @@
     </div>
 
     <div id="main-content">
-        <form id="videoForm">
+        <form id="videoForm" onsubmit="this.querySelector('button').disabled = true;">
             <h1>Share a video to <%=locals.server%></h1>
             <p>Video you would like to share</p>
             <input class="input" type="text" name="video" id="videoInput" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
@@ -146,26 +146,26 @@
 
     
     <script>
-    const form = document.getElementById('videoForm');
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+        const form = document.getElementById('videoForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-        const videoInput = document.getElementById('videoInput').value.trim();
-        const messageInput = document.getElementById('messageInput').value.trim();
+            const videoInput = document.getElementById('videoInput').value.trim();
+            const messageInput = document.getElementById('messageInput').value.trim();
 
-        if (!videoInput) {
-            alert('Please enter a video URL');
-            return;
-        }
+            if (!videoInput) {
+                alert('Please enter a video URL');
+                return;
+            }
 
-        let url = `/${videoInput}`;
-        if (messageInput) {
-            // encode the message for query string
-            url += `/?message=${encodeURIComponent(messageInput)}`;
-        }
+            let url = `/${videoInput}`;
+            if (messageInput) {
+                // encode the message for query string
+                url += `/?message=${encodeURIComponent(messageInput)}`;
+            }
 
-        window.location.href = url;
-    });
+            window.location.href = url;
+        });
     </script>
 </body>
 </html>
