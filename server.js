@@ -24,9 +24,10 @@ app.set('view engine', 'ejs')
 // Definitions
 const PORT = process.env.PORT
 const MAX_FILE_SIZE = process.env.MAX_FILE_SIZE
-const DISCORD_WEBHOOK = process.env.DISCORD_WEBHOOK
 const MAX_VIDEO_LENGTH = process.env.MAX_VIDEO_LENGTH
 const SERVER_NAME = process.env.SERVER_NAME
+const CHANNELS = JSON.parse(process.env.CHANNELS)
+const DEFAULT_CHANNEL = process.env.DEFAULT_CHANNEL
 
 const supportedDomains = [
     "www.youtube.com",
@@ -114,7 +115,7 @@ async function shrinkVideo(video) {
 }
 
 // Uses discord webhook to send video to discord
-async function sendVideo(video, message, username) {
+async function sendVideo(video, message, username, channel) {
     const form = new formData();
     const filePath = `cache/videos/${video}`
     let webhookMessage = ""
@@ -132,8 +133,14 @@ async function sendVideo(video, message, username) {
     // Add the video file
     form.append("file", fs.createReadStream(filePath));
 
+    const selectedChannel = CHANNELS.find(c => c.name === channel)
+
+    if (!selectedChannel) {
+        throw new error("No channel matches from specified list")
+    }
+
     try {
-        const res = await axios.post(DISCORD_WEBHOOK, form, {
+        const res = await axios.post(selectedChannel.webhook, form, {
             headers: form.getHeaders(),
         });
         log(`Message sent: ${res.status}`);
@@ -141,8 +148,6 @@ async function sendVideo(video, message, username) {
         log(`Error sending webhook: ${err.response?.data || err.message}`);
     }
 }
-
-
 
 // Checks the length of a video
 function checkVideoLength(url) {
@@ -232,7 +237,7 @@ function getVideoTitle(url) {
 }
 
 // Complete full download and send of video
-async function downloadAndSend(url, guid, res, message, req) {
+async function downloadAndSend(url, guid, res, message, req, channel) {
     // Check video length
     log(`Requested to download: ${url}`, req.ip)
     const videoLength = await checkVideoLength(url)
@@ -254,7 +259,7 @@ async function downloadAndSend(url, guid, res, message, req) {
     await shrinkVideo(`${guid}.mp4`)
     // Send the video to discord via webhook
     const username = req.cookies.username
-    sendVideo(`${guid}.mp4`, message, username)
+    sendVideo(`${guid}.mp4`, message, username, channel)
 }
 
 // Save username to cookie
@@ -282,6 +287,7 @@ app.use(async (req, res, next) => {
     const lastSlashQuestion = fullPath.lastIndexOf('/?');
     
     let videoUrl, message = '';
+    let channel = DEFAULT_CHANNEL
     
     if (lastSlashQuestion !== -1) {
         // Split at the last /?
@@ -291,6 +297,7 @@ app.use(async (req, res, next) => {
         // Parse the query parameters
         const params = new URLSearchParams(queryPart);
         message = params.get('message') || '';
+        channel = params.get('channel') || DEFAULT_CHANNEL
     } else {
         // No message parameter, treat entire thing as video URL
         videoUrl = fullPath;
@@ -304,7 +311,7 @@ app.use(async (req, res, next) => {
     if (videoUrl) {
         if (isApprovedUrl(videoUrl, supportedDomains)) {
             try {
-                await downloadAndSend(videoUrl, guid, res, message, req) 
+                await downloadAndSend(videoUrl, guid, res, message, req, channel) 
                 cleanupFiles(guid)     
             } catch (err) {
                 log(`Failed to download ${videoUrl}`, err)
@@ -316,7 +323,7 @@ app.use(async (req, res, next) => {
         }
     } else {
         log('Connected to home page', req.ip);
-        res.render('index.ejs', {server: SERVER_NAME, username: req.cookies.username || ""})
+        res.render('index.ejs', {server: SERVER_NAME, username: req.cookies.username || "", channels: CHANNELS, defaultChannel: DEFAULT_CHANNEL})
     }
     
     next();

@@ -109,6 +109,41 @@
 
         }
 
+        /* active (when radio is selected) */
+        input[type="radio"]:checked + label.btn {
+            background-color: #374151; /* darker gray when selected */
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* hide real radio inputs */
+        input[type="radio"] {
+            display: none;
+        }
+
+        /* style the label like button */
+            label.btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 8px; /* spacing */
+            display: inline-block;
+            text-align: center;
+        }
+
+        /* hover effect */
+        label.btn:hover {
+            background-color: #2b4fc7;
+            box-shadow: 0 0 8px rgba(79, 70, 229, 0.6);
+        }
+
+        
+
 
     </style>
 </head>
@@ -132,6 +167,10 @@
     <div id="main-content">
         <form id="videoForm" onsubmit="this.querySelector('button').disabled = true;">
             <h1>Share a video to <%=locals.server%></h1>
+            <% locals.channels.forEach(function(channel) { %>
+                <input type="radio" id="<%=channel.name%>" name="channelSet" value="<%=channel.name%>" <% if (channel.name === locals.defaultChannel) { %>checked<% } %>>
+                <label for="<%=channel.name %>" class="btn"><%=channel.name%></label>
+            <% }); %>
             <p>Video you would like to share</p>
             <input class="input" type="text" name="video" id="videoInput" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
             <br><br><br>
@@ -139,6 +178,7 @@
                 Message <span class="optional">(optional)</span>
             </p>
             <input class="input" type="text" name="message" id="messageInput">
+            
             <br><br>
             <button type="submit">Send</button>
         </form>
@@ -159,9 +199,24 @@
             }
 
             let url = `/${videoInput}`;
+
+            // Start building query params
+            let params = new URLSearchParams();
+
+            // Add message if it exists
             if (messageInput) {
-                // encode the message for query string
-                url += `/?message=${encodeURIComponent(messageInput)}`;
+             params.append("message", messageInput);
+            }
+
+            // Get selected radio
+            let selectedOption = document.querySelector('input[name="channelSet"]:checked');
+            if (selectedOption) {
+              params.append("channel", selectedOption.value);
+            }
+
+            // If we have any params, attach them to the URL
+            if (params.toString()) {
+                url += `/?${params.toString()}`;
             }
 
             window.location.href = url;
