@@ -39,7 +39,9 @@ const supportedDomains = [
     "www.twitch.tv",
     "twitch.tv",
     "reddit.com",
-    "www.reddit.com"
+    "www.reddit.com",
+    "facebook.com",
+    "www.facebook.com"
 ]
 
 const logFile = path.join(__dirname, 'logs', 'app.log');
