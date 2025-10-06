@@ -1,6 +1,6 @@
 const express = require('express'); // Module for hosting an express server
 const path = require("path") // Module for managing and joining paths/directories
-const { exec } = require("child_process") // Module for executing processes on the system
+const { exec, execFile } = require("child_process") // Module for executing processes on the system
 const { randomUUID } = require('crypto'); // Module used for creating random UUIDs
 const fs = require("fs"); // Module for managing files
 const promisefs = require("fs").promises // Module for managing files with promises
@@ -49,7 +49,11 @@ const logFile = path.join(__dirname, 'logs', 'app.log');
 // Uses yt-dlp to download video
 function downloadVideo(url, output) {
     return new Promise((resolve, reject) => {
-        exec(`yt-dlp -o cache/downloads/${output}.mp4 --recode-video mp4 ${url}`, (error, stdout, stderr) => {
+        execFile('yt-dlp',  [
+            '-o', `cache/downloads/${output}.mp4`,
+            '--recode-video', 'mp4',
+            url
+        ], (error, stdout, stderr) => {
             //log(stdout)
             if (error) return reject(error);
             if (stderr) log(`Error: ${stderr}`);
@@ -73,7 +77,12 @@ async function shrinkVideo(video) {
         log(`${video} is greater than ${MAX_FILE_SIZE}MB, resizing...`);
         // Get duration with ffprobe
         const duration = await new Promise((resolve, reject) => {
-            exec(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, 
+            execFile('ffprobe',  [
+                '-v', 'error',
+                '-show_entries', 'format=duration',
+                '-of', 'default=noprint_wrappers=1:nokey=1',
+                filePath
+            ], 
                 (err, stdout) => {
                     if (err) return reject(err);
                     resolve(parseFloat(stdout));
@@ -96,8 +105,16 @@ async function shrinkVideo(video) {
 
         // Run ffmpeg with calculated bitrate
         return new Promise((resolve, reject) => {
-            exec(
-                `ffmpeg -i "${filePath}" -c:v libx264 -b:v ${videoBitrate} -c:a aac -b:a ${audioBitrate} "${outputFilePath}" -y`,
+            execFile(
+                'ffmpeg',  [
+                    '-i', filePath,
+                    '-c:v', 'libx264',
+                    '-b:v', videoBitrate.toString(),
+                    '-c:a', 'aac',
+                    '-b:a', audioBitrate.toString(),
+                    outputFilePath,
+                    '-y'
+                ],
                 (err, stdout, stderr) => {
                     //log(stdout)
                     if (err) return reject(err);
@@ -154,7 +171,10 @@ async function sendVideo(video, message, username, channel) {
 // Checks the length of a video
 function checkVideoLength(url) {
     return new Promise((resolve, reject) => {
-        exec(`yt-dlp --get-duration ${url}`, (error, stdout, stderr) => {
+        execFile('yt-dlp', [
+            '--get-duration',
+            url
+        ], (error, stdout, stderr) => {
             if (error) return reject(error);
             if (stderr) log(`Error: ${stderr}`);
 
@@ -229,7 +249,10 @@ async function cleanupFiles(guid, folder = "cache") {
 // Get video title
 function getVideoTitle(url) {
   return new Promise((resolve, reject) => {
-    exec(`yt-dlp --get-title "${url}"`, (error, stdout, stderr) => {
+    execFile('yt-dlp', [
+        '--get-title',
+        url
+    ], (error, stdout, stderr) => {
       if (error) {
         return reject(new Error(stderr || error.message));
       }
