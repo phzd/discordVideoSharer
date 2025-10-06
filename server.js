@@ -41,7 +41,11 @@ const supportedDomains = [
     "reddit.com",
     "www.reddit.com",
     "facebook.com",
-    "www.facebook.com"
+    "www.facebook.com",
+    "x.com",
+    "twitter.com",
+    "www.x.com",
+    "wwww.twitter.com"
 ]
 
 const logFile = path.join(__dirname, 'logs', 'app.log');
