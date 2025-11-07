@@ -295,7 +295,7 @@ async function downloadAndSend(url, guid, res, message, req, channel) {
 app.post("/set-username", (req, res) => {
     const { username } = req.body;
     if (username) {
-        res.cookie("username", username, { maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie("username", username, { maxAge: 10 * 365 * 24 * 60 * 60 * 1000 }); // 10 years
         log(`set username to: ${username}`, req.ip)
     } else {
         res.clearCookie("username")
