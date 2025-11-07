@@ -31,14 +31,7 @@
 
         /* Mobile styles */
         @media only screen and (max-width: 768px) {
-            #main-content {
-                background-color: #000000;
-                padding: 40px;
-                border-radius: 20px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                margin-top: 60%;
-                width: 80%
-            }
+            
         }
 
         h1 {
@@ -146,34 +139,46 @@
         
         /* Mobile styles */
         @media only screen and (max-width: 768px) {
+            #main-content {
+                background-color: #000000;
+                border-radius: 20px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                width: 85%;
+                margin-top: 0; /* remove large top margin */
+                padding: 24px; /* a bit tighter padding on mobile */
+            }
+
             body {
                 justify-content: center; /* centers vertically on small screens */
             }
 
-            #main-content {
-                width: 85%;
-                margin-top: 0; /* remove large top margin */
-                padding: 30px; /* a bit tighter padding on mobile */
-            }
-
             input, button, label.btn {
-                font-size: 24px; /* make text/buttons larger */
-                padding: 24px 32px; /* more touch-friendly */
+                font-size: 18px; /* make text/buttons larger */
+                padding: 18px 24px; /* more touch-friendly */
             }
 
             p {
-                font-size: 24px;
+                font-size: 18px;
+                margin: 4px 0; /* smaller top/bottom margin */
+            }
+
+            input {
+                margin: 4px 0;
             }
 
             .optional {
-                font-size: 18px;
+                font-size: 14px;
             }
 
             #username-box {
                 position: static; /* removes absolute positioning on mobile */
-                margin-bottom: 20px;
+                margin-bottom: 20px;  /* gap below for main content */
                 width: 85%;
-                
+            }
+
+            h1 {
+                color: #4f46e5;
+                font-size: 28px;
             }
         }
 
