@@ -45,7 +45,10 @@ const supportedDomains = [
     "x.com",
     "twitter.com",
     "www.x.com",
-    "wwww.twitter.com"
+    "wwww.twitter.com",
+    "tiktok.com",
+    "www.tiktok.com",
+    "vt.tiktok.com"
 ]
 
 const logFile = path.join(__dirname, 'logs', 'app.log');
