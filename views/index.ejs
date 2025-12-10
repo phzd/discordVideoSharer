@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHZD</title>
+    <title><%=locals.server%> Video Sharer</title>
     <link rel="icon" id="favicon" href="/images/favicon.png" type="image/png">
 
     <style>
@@ -183,6 +183,12 @@
             }
         }
 
+        .footer {
+            position: fixed;
+            bottom: 0;
+            color: white;
+        }
+
 
     </style>
 </head>
@@ -222,6 +228,10 @@
             <button type="submit">Send</button>
         </form>
     </div>
+
+    <footer class="footer">
+        Version: <%=locals.version%>
+    </footer>
 
     
     <script>

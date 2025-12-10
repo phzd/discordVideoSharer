@@ -1,3 +1,5 @@
+const version = '1.12'; // Application version
+
 const express = require('express'); // Module for hosting an express server
 const path = require("path") // Module for managing and joining paths/directories
 const { exec, execFile } = require("child_process") // Module for executing processes on the system
@@ -406,7 +408,7 @@ app.use(async (req, res, next) => {
         }
     } else {
         log('Connected to home page', req.ip);
-        res.render('index.ejs', {server: SERVER_NAME, username: req.cookies.username || "", channels: CHANNELS, defaultChannel: DEFAULT_CHANNEL})
+        res.render('index.ejs', {server: SERVER_NAME, username: req.cookies.username || "", channels: CHANNELS, defaultChannel: DEFAULT_CHANNEL, version: version});
     }
     
     next();
