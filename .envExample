@@ -1,0 +1,20 @@
+# Port for the web client to run on
+PORT=3000
+
+# Maximum file size for uploading to discord (in MB)
+MAX_FILE_SIZE=10
+
+# Maximum video length for uploading to discord (in seconds)
+MAX_VIDEO_LENGTH=150
+
+# Name of the server (displayed on the web client)
+SERVER_NAME=Discord/Custom Name
+
+# Discord channels and their webhooks (in JSON format)
+CHANNELS=[{"name":"NameOfYourChannel","webhook":"YourWebhookURL"},{"name":"NameOfDifferentChannel","webhook":"YourOtherChannelsWebhook"}]
+
+# Default channel to use if none is specified
+DEFAULT_CHANNEL=NameOfYourChannel
+
+# Number of days before a link can be resubmitted
+LINK_TIMEOUT_DAYS=7
