@@ -8,9 +8,29 @@ const axios = require("axios") // Module for making webhook request
 const formData = require("form-data") // Module for putting together message headers
 const url = require('url'); // Module for URL handling
 const cookieParser = require('cookie-parser') // Module for handling cookies
-const { error } = require('console');
+const { error } = require('console'); // Module for logging errors
+const Database = require('better-sqlite3'); // Module for sqlite database handling
 
 require('dotenv').config() // Module for importing .env variables
+
+// Create data folder if it doesn't exist
+if (!fs.existsSync('data')){
+    fs.mkdirSync('data');
+}
+// Create logs folder if it doesn't exist
+if (!fs.existsSync('logs')){
+    fs.mkdirSync('logs');
+}
+
+const db = new Database('data/links.db'); // Create or open the links database file
+
+// Create table
+db.exec(`CREATE TABLE IF NOT EXISTS links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL,
+    created_at TEXT NOT NULL
+    )
+`);
 
 // Create an Express application instance
 const app = express();
@@ -28,6 +48,7 @@ const MAX_VIDEO_LENGTH = process.env.MAX_VIDEO_LENGTH
 const SERVER_NAME = process.env.SERVER_NAME
 const CHANNELS = JSON.parse(process.env.CHANNELS)
 const DEFAULT_CHANNEL = process.env.DEFAULT_CHANNEL
+const LINK_TIMEOUT_DAYS = process.env.LINK_TIMEOUT_DAYS || 7
 
 const supportedDomains = [
     "www.youtube.com",
@@ -272,6 +293,12 @@ function getVideoTitle(url) {
 async function downloadAndSend(url, guid, res, message, req, channel) {
     // Check video length
     log(`Requested to download: ${url}`, req.ip)
+    if (checkLinkIsRecent(url, LINK_TIMEOUT_DAYS)) {
+        const errorMessage = `This link has already been submitted in the past ${LINK_TIMEOUT_DAYS} days.`
+        res.render('error.ejs', { errorMessage: errorMessage})
+        log(errorMessage)
+        throw new error(errorMessage)
+    }
     const videoLength = await checkVideoLength(url)
     if (videoLength > MAX_VIDEO_LENGTH) {
         const errorMessage = `Video is longer than ${MAX_VIDEO_LENGTH} seconds`
@@ -292,6 +319,30 @@ async function downloadAndSend(url, guid, res, message, req, channel) {
     // Send the video to discord via webhook
     const username = req.cookies.username
     sendVideo(`${guid}.mp4`, message, username, channel)
+    // Add the link to the database
+    addLink(url)
+}
+
+// Insert a link with current date
+function addLink(url) {
+  const stmt = db.prepare('INSERT INTO links (url, created_at) VALUES (?, ?)');
+  const currentDate = new Date().toISOString();
+  const result = stmt.run(url, currentDate);
+  return result.lastInsertRowid;
+}
+
+// Check if link has been submitted in the past n days
+function checkLinkIsRecent(url, days = 7) {
+    const stmt = db.prepare(`
+        SELECT id, url, created_at 
+        FROM links 
+        WHERE url = ? 
+        AND datetime(created_at) > datetime('now', '-' || ? || ' days')
+        LIMIT 1
+    `);
+
+    const result = stmt.get(url, days);
+    return result !== undefined;
 }
 
 // Save username to cookie
