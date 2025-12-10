@@ -183,6 +183,12 @@
             }
         }
 
+        .footer {
+            position: fixed;
+            bottom: 0;
+            color: white;
+        }
+
 
     </style>
 </head>
@@ -222,6 +228,10 @@
             <button type="submit">Send</button>
         </form>
     </div>
+
+    <footer class="footer">
+        Version: <%=locals.version%>
+    </footer>
 
     
     <script>
